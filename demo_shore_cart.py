@@ -23,6 +23,7 @@ def sim_tensor_2x(gtab, angle=90, sphere=None, S0=1., snr=None):
 
     return data, sticks, odf_gt
 
+
 SNR = 15
 
 zeta = 700.
