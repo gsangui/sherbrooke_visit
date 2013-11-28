@@ -54,13 +54,35 @@ def fill_qspace_plane(radial_order, coeff, gtab, mu, npoints, angle, sphere, snr
 
     return X, Y, Egrid, E_gt.reshape(X.shape)
 
+def fill_qspace_line(radial_order, coeff, gtab, mu, npoints, angle, sphere, snr):
+
+    q = np.sqrt(2) * np.sqrt(gtab.bvals)
+    q.max()   
+
+    x = np.arange(0, q.max(), q.max()/npoints)
+    y = np.zeros(x.shape)
+    z = np.zeros(x.shape)
+    
+    qlist = np.vstack((x,y,z)).T
+    
+    bval_draw = x ** 2 + y ** 2 + z ** 2
+    bvec_draw = qlist / np.sqrt(bval_draw)[:,None]
+
+    E_line_ft = shore_evaluate_E(radial_order, coeff, qlist, mu)
+    
+    gtab_draw = gradient_table(bval_draw , bvec_draw)
+
+    E_line_noise, _, _ = sim_tensor_2x(gtab_draw, angle=angle, sphere=sphere, snr=snr)
+    E_line_gt, _, _ = sim_tensor_2x(gtab_draw, angle=angle, sphere=sphere, snr=None)
+
+    return x, bval_draw, E_line_ft, E_line_gt, E_line_noise 
 
 
 zeta = 700.
 mu = 1/ (2 * np.pi * np.sqrt(zeta))
 lambd = 0.001
 
-radial_order = 6
+radial_order = 4
 angle = 90
 fsamples = 'samples.txt'
 snr=100
@@ -86,21 +108,39 @@ M = shore_model.cache_get('shore_phi_matrix', key=shore_model.gtab)
 coeff = shore_fit.shore_coeff
 data_fitted = np.dot(M, coeff)
 
+x, b, E_line_ft, E_line_gt, E_line_noise = fill_qspace_line(radial_order, coeff, gtab, mu, 50, angle, sphere, snr)
+
 X, Y, Egrid, E_gt = fill_qspace_plane(radial_order, coeff, gtab, mu, 15, angle, sphere, snr)
 
 fig = plt.figure(1)
+#fig.title('E(0) = {:3.3f}'.format(shore_e0(radial_order , shore_fit.shore_coeff)))
 ax1 = fig.add_subplot(2, 2, 1, title='data vs fitted signal')
 ax1.plot(data.ravel())
 ax1.plot(data_fitted.ravel())
 
 
+ax3 = fig.add_subplot(2, 2, 3, title='radial data vs fitted signal')
+ax3.plot(x, E_line_gt)
+ax3.plot(x, E_line_ft)
+ax3.plot(x, E_line_noise,'r.')
+
+
+ax4 = fig.add_subplot(2, 2, 4, title='radial data vs fitted signal')
+ax4.semilogy(x, E_line_gt)
+ax4.semilogy(x, E_line_ft)
+ax4.semilogy(x, E_line_noise,'r.')
+
+
 print("E0 %f" % shore_e0(radial_order , shore_fit.shore_coeff))
 
-ax1 = fig.add_subplot(2, 2, 4, title='fitted')
-ax1.contour(X, Y, Egrid, [.2, .3, .4, .5, .6, .7, .8])
-ax1.axis('equal')
+#ax4 = fig.add_subplot(2, 2, 4, title='fitted')
+#ax4.contour(X, Y, Egrid, [.2, .3, .4, .5, .6, .7, .8])
+#ax4.axis('equal')
 
-ax2 = fig.add_subplot(2, 2, 2, title='ground truth')
+print(E_line_ft[0])
+
+ax2 = fig.add_subplot(2, 2, 2, title='data')
+ax2.contour(X, Y, Egrid, [.2, .3, .4, .5, .6, .7, .8])
 ax2.contour(X, Y, E_gt, [.2, .3, .4, .5, .6, .7, .8])
 ax2.axis('equal')
 
