@@ -56,7 +56,7 @@ def fill_qspace_plane(radial_order, coeff, gtab, mu, npoints, angle, sphere, snr
 
 def fill_qspace_line(radial_order, coeff, gtab, mu, npoints, angle, sphere, snr):
 
-    q = np.sqrt(2) * np.sqrt(gtab.bvals)
+    q = 2 * np.sqrt(gtab.bvals)
     q.max()   
 
     x = np.arange(0, q.max(), q.max()/npoints)
@@ -66,7 +66,7 @@ def fill_qspace_line(radial_order, coeff, gtab, mu, npoints, angle, sphere, snr)
     qlist = np.vstack((x,y,z)).T
     
     bval_draw = x ** 2 + y ** 2 + z ** 2
-    bvec_draw = qlist / np.sqrt(bval_draw)[:,None]
+    bvec_draw = qlist / (np.sqrt(bval_draw)[:,None]+.0000000001)
 
     E_line_ft = shore_evaluate_E(radial_order, coeff, qlist, mu)
     
@@ -82,7 +82,7 @@ zeta = 700.
 mu = 1/ (2 * np.pi * np.sqrt(zeta))
 lambd = 0.001
 
-radial_order = 4
+radial_order = 8
 angle = 90
 fsamples = 'samples.txt'
 snr=100
@@ -119,16 +119,27 @@ ax1.plot(data.ravel())
 ax1.plot(data_fitted.ravel())
 
 
+
 ax3 = fig.add_subplot(2, 2, 3, title='radial data vs fitted signal')
 ax3.plot(x, E_line_gt)
 ax3.plot(x, E_line_ft)
 ax3.plot(x, E_line_noise,'r.')
+ax3.plot(sqrt([5000,5000]), [1.2,0.001],'.k--')
+ax3.plot(sqrt([4000,4000]), [1.2,0.001],'.k--')
+ax3.plot(sqrt([3000,3000]), [1.2,0.001],'.k--')
+ax3.plot(sqrt([2000,2000]), [1.2,0.001],'.k--')
+ax3.plot(sqrt([1000,1000]), [1.2,0.001],'.k--')
 
 
 ax4 = fig.add_subplot(2, 2, 4, title='radial data vs fitted signal')
 ax4.semilogy(x, E_line_gt)
 ax4.semilogy(x, E_line_ft)
 ax4.semilogy(x, E_line_noise,'r.')
+ax4.semilogy(sqrt([5000,5000]), [1.2,0.001],'.k--')
+ax4.semilogy(sqrt([4000,4000]), [1.2,0.001],'.k--')
+ax4.semilogy(sqrt([3000,3000]), [1.2,0.001],'.k--')
+ax4.semilogy(sqrt([2000,2000]), [1.2,0.001],'.k--')
+ax4.semilogy(sqrt([1000,1000]), [1.2,0.001],'.k--')
 
 
 print("E0 %f" % shore_e0(radial_order , shore_fit.shore_coeff))
